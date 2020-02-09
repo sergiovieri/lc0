@@ -46,17 +46,21 @@ std::vector<std::string> GetFileList(const std::string& directory) {
   if (!dir) return result;
   while (auto* entry = readdir(dir)) {
     bool exists = false;
+    const std::string filename = directory + "/" + entry->d_name;
     switch (entry->d_type) {
       case DT_REG:
         exists = true;
         break;
       case DT_LNK:
         // check that the soft link actually points to a regular file.
-        const std::string filename = directory + "/" + entry->d_name;
         struct stat s;
         exists =
             stat(filename.c_str(), &s) == 0 && (s.st_mode & S_IFMT) == S_IFREG;
         break;
+      case DT_UNKNOWN:
+        if (filename.back() == 'z') {
+            exists = true;
+        }
     }
     if (exists) result.push_back(entry->d_name);
   }
